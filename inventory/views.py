@@ -1,7 +1,7 @@
 from rest_framework import viewsets, status
 from rest_framework.decorators import action, api_view
 from rest_framework.response import Response
-from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from django.shortcuts import get_object_or_404
 from .models import Inventory
 from .serializers import InventorySerializer, InventoryPhotoSerializer
@@ -15,7 +15,7 @@ class InventoryViewSet(viewsets.ModelViewSet):
     """
     queryset = Inventory.objects.all()
     serializer_class = InventorySerializer
-    parser_classes = (MultiPartParser, FormParser)
+    parser_classes = (MultiPartParser, FormParser, JSONParser)
 
     def get_queryset(self):
         """Get all inventory items ordered by creation date"""
@@ -82,7 +82,7 @@ class InventoryViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        serializer = InventoryPhotoSerializer(instance, data=request.data, partial=True)
+        serializer = InventoryPhotoSerializer(instance, data=request.data, partial=True, context=self.get_serializer_context())
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
@@ -114,7 +114,7 @@ def register_inventory(request):
     Optional fields: description
     """
     if request.method == 'POST':
-        serializer = InventorySerializer(data=request.data)
+        serializer = InventorySerializer(data=request.data, context={'request': request})
         if serializer.is_valid():
             serializer.save()
             return Response(
